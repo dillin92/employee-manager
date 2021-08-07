@@ -9,11 +9,11 @@
     CREATE TABLE role ( 
         id INT PRIMARY KEY, 
         title VARCHAR(30) NOT NULL, 
-        salary DECIMAL, 
+        salary INT NOT NULL, 
         department_id INT   
     );
 
      CREATE TABLE department (  
             id INT PRIMARY KEY,  
-            name VARCHAR(30) NOT NULL    
+            dpName VARCHAR(30) NOT NULL    
         );

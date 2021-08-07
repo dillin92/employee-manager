@@ -1,12 +1,12 @@
 class Department {
-    constructor(id='', name='') {
+    constructor(id='', dpName='') {
         this.id =id;
-        this.name = name;
+        this.dpName = dpName;
     }
 
      getId(){ return this.id; }
 
-    getName() { return this.id;}
+    getName() { return this.dpName;}
 };
 
 module.exports = Department;
