@@ -1,4 +1,5 @@
 const cTable = require('console.table');
+const { restoreDefaultPrompts } = require('inquirer');
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const Employee = require('./models/Employee');
@@ -21,7 +22,7 @@ const db = mysql.createConnection(
 
 
 
-function initApp() {
+async function initApp() {
 
     db.connect((err) => {
         if(err) {
@@ -29,32 +30,35 @@ function initApp() {
         }
     });
 
-        return inquirer.prompt ([
+        const data = await inquirer.prompt([
         {
-        type: 'list',
-        name: 'start',
-        message: 'What would you like to do?',
-        choices: ['View All Employees', 'View All Employees by department', 'Add Employee', 'Remove Employee', 'Update Employee role', 'Update Employee Manager']
+            type: 'list',
+            name: 'start',
+            message: 'What would you like to do?',
+            choices: ['View All Employees', 'View All Employees by department','View All Roles','View All Departments','Add Employee','Remove Employee']
         }
-    
-        ])
-    .then(data => {
-     let userSelection = data.start;
-     console.log(userSelection);
-       if(userSelection === 'View All Employees') {
-           return viewAllEmployees();
-       } if(userSelection === 'View All Employees by department'){
-           return viewByDepartment();
-       }
-       if(userSelection === 'Add Employee'){
+    ]);
+    let userSelection = data.start;
+    console.log(userSelection);
+    if (userSelection === 'View All Employees') {
+        return viewAllEmployees();
+    }
+    if (userSelection === 'View All Employees by department') {
+        return viewByDepartment();
+    }
+    if (userSelection === 'View All Roles') {
+        return viewAllRoles();
+    }
+    if (userSelection === 'View all Departments') {
+        return viewAllDepartments();
+    }
+    if (userSelection === 'Add Employee') {
         return addEmployee();
     }
-       else {
-           console.log('oops');
-       }
-        
-        
-    });
+
+    else {
+        console.log('oops');
+    }
 };
 
 function viewAllEmployees(){
@@ -68,6 +72,25 @@ function viewAllEmployees(){
 
 };
 
+function viewAllRoles(){
+
+    db.query('SELECT * FROM role;', (err, roles) => {
+        console.table(roles);
+        initApp();
+    });
+
+    
+
+};
+
+function viewAllDepartments() {
+
+    db.query('SELECT * FROM department;', (err, departments) => {
+        console.table(departments);
+        initApp();
+    });
+};
+
 function viewByDepartment() {
 
     db.query('SELECT employees.first_name, employees.last_name, role.title FROM employees LEFT JOIN role ON employees.role_id = role.id;', (err, departments) => {
@@ -76,48 +99,70 @@ function viewByDepartment() {
     })
 };
 
-function addEmployee() {
+async function addEmployee () {
 
-    return inquirer.prompt([
+    db.query('SELECT * FROM role;', async (err, roles) => {
 
-        {
-            type: 'input',
-            name: 'first_name',
-            message: 'What is the employees first name?',
-            validate: (value) => { if (value) { return true } else { return "Please enter a value to continue" } }
-        },
-        {
-            type: 'input',
-            name: 'last_name',
-            message: 'What is the team members last name?',
-            validate: (value) => { if (value) { return true } else { return "Please enter a value to continue" } }
-        },
-        {
-            type: 'input',
-            name: 'role_id',
-            message: 'What is the employees role id? (1-Owner 2-Manager 3-Engineers 4-Intern)',
-            validate: (value) => { if (value) { return true } else { return "Please enter a value to continue" } }
-        },
-        {
-            type: 'input',
-            name: 'manager_id',
-            message: 'What is the employees managers id?',
-            validate: (value) => { if (value) { return true } else { return "Please enter a value to continue" } }
-        }
+        let displayedRoles = roles.map((role) => {
 
-    ]).then(({ first_name, last_name, role_id, manager_id }) => {
+            return {
+                value: role.id,
+                name: role.title
+            } 
+
+        });
+
+        console.log(displayedRoles);
+
+        const { first_name, last_name, role_id, manager_id } = await inquirer.prompt([
+            {
+                type: 'input',
+                name: 'first_name',
+                message: 'What is the employees first name?',
+                validate: (value_1) => { if (value_1) { return true; } else { return "Please enter a value to continue"; } }
+            },
+            {
+                type: 'input',
+                name: 'last_name',
+                message: 'What is the team members last name?',
+                validate: (value_3) => { if (value_3) { return true; } else { return "Please enter a value to continue"; } }
+            },
+            {
+                type: 'list',
+                name: 'role_id',
+                message: 'What is the employees role?',
+                choices: displayedRoles
+        
+            },
+            {
+                type: 'input',
+                name: 'manager_id',
+                message: 'What is the employees managers id?',
+                validate: (value_7) => { if (value_7) { return true; } else { return "Please enter a value to continue"; } }
+            }
+        ]);
 
         this.employee = new Employee(first_name, last_name, role_id, manager_id);
         console.log(this.employee);
-
-
-        db.('INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (' + this.employee.first_name + ',' + this.employee.last_name + ',' + this.employee.role_id + ',' + this.employee.manager_id + ')', (err,employees) => {
+    
+        db.query('INSERT INTO employees SET ?', this.employee, (err, employees) => {
             console.table(employees);
             initApp();
         });
+
+
+        
     });
 
-}
+
+    
+
+};
+
+// function deleteEmployee () {
+
+
+// }
 
 
 initApp();
