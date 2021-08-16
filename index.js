@@ -39,7 +39,6 @@ async function initApp() {
         }
     ]);
     let userSelection = data.start;
-    console.log(userSelection);
     if (userSelection === 'View All Employees') {
         return viewAllEmployees();
     }
@@ -49,11 +48,14 @@ async function initApp() {
     if (userSelection === 'View All Roles') {
         return viewAllRoles();
     }
-    if (userSelection === 'View all Departments') {
+    if (userSelection === 'View All Departments') {
         return viewAllDepartments();
     }
     if (userSelection === 'Add Employee') {
         return addEmployee();
+    }
+    if(userSelection === 'Remove Employee') {
+        return deleteEmployee();
     }
 
     else {
@@ -112,8 +114,6 @@ async function addEmployee () {
 
         });
 
-        console.log(displayedRoles);
-
         const { first_name, last_name, role_id, manager_id } = await inquirer.prompt([
             {
                 type: 'input',
@@ -143,10 +143,11 @@ async function addEmployee () {
         ]);
 
         this.employee = new Employee(first_name, last_name, role_id, manager_id);
-        console.log(this.employee);
+    ;
     
         db.query('INSERT INTO employees SET ?', this.employee, (err, employees) => {
-            console.table(employees);
+            
+            viewAllEmployees();
             initApp();
         });
 
@@ -159,10 +160,40 @@ async function addEmployee () {
 
 };
 
-// function deleteEmployee () {
+function deleteEmployee () {
+
+    db.query('SELECT employees.id, employees.first_name, employees.last_name FROM employees', (err, employees) => {
+    
+         inquirer.prompt([
+            {
+                type: 'input',
+                name: 'selected_employee',
+                message: 'Which employee would you like to remove?(type the id of the employee)',
+                choices: console.table(employees)
+            }
+    
+            
+        ]).then(id => {
+
+            let employeeId = id.selected_employee;
+
+            db.query('DELETE FROM employees WHERE employees.id=' + employeeId, async (err, employees) => {
+                return viewAllEmployees();
+            });
+        }) ;
+    });
 
 
-// }
+       
+};
+
+    
+    
+
+
+ 
+
+  
 
 
 initApp();
